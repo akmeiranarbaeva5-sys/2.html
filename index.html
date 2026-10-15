@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-сынып Информатика - i-Test</title>
+    <!-- Canvas Confetti салют эффектісі үшін -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --secondary-color: #f4f7f6;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        /* Тіркеу бөлімі */
+        #registration-screen {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+        }
+
+        .form-group input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #004085;
+        }
+
+        /* Тест бөлімі */
+        #quiz-screen {
+            display: none;
+        }
+
+        .user-info-bar {
+            display: flex;
+            justify-content: space-between;
+            background: #e9ecef;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .question-card {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .question-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .options-list li {
+            margin-bottom: 8px;
+        }
+
+        .options-list label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .options-list label:hover {
+            background: #e2e6ea;
+        }
+
+        /* Нәтиже экраны */
+        #result-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .result-score {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>i-Test: Информатика (3-сынып)</h1>
+
+    <!-- 1. Тіркелу экраны -->
+    <div id="registration-screen">
+        <h3>Оқушының мәліметтерін енгізіңіз</h3>
+        <div class="form-group">
+            <label for="student-name">Аты-жөні:</label>
+            <input type="text" id="student-name" placeholder="Мысалы: Айсұлтан Серікұлы" required>
+        </div>
+        <div class="form-group">
+            <label for="student-class">Сыныбы:</label>
+            <input type="text" id="student-class" placeholder="Мысалы: 3 «А»" required>
+        </div>
+        <div class="form-group">
+            <label for="test-date">Күні:</label>
+            <input type="date" id="test-date" required>
+        </div>
+        <button class="btn" onclick="startTest()">Тестті бастау</button>
+    </div>
+
+    <!-- 2. Тест экраны -->
+    <div id="quiz-screen">
+        <div class="user-info-bar">
+            <span id="display-name"></span>
+            <span id="display-class"></span>
+            <span id="display-date"></span>
+        </div>
+
+        <div id="questions-container">
+            <!-- JavaScript арқылы сұрақтар динамикалық түрде енгізіледі -->
+        </div>
+
+        <button class="btn" onclick="submitTest()">Тестті аяқтау</button>
+    </div>
+
+    <!-- 3. Нәтиже экраны -->
+    <div id="result-screen">
+        <h2>Тест аяқталды!</h2>
+        <div class="result-score" id="score-text"></div>
+        <button class="btn" onclick="exportToExcel()">Excel форматында жүктеу (CSV)</button>
+    </div>
+</div>
+
+<script>
+    // Тест базасы (Көрсетілген бөлімдер мен тақырыптар бойынша)
+    const questions = [
+        {
+            id: 1,
+            question: "1. Интернет желісімен жұмыс кезіндегі дұрыс этикалық және құқықтық норма:",
+            options: [
+                "Бөтен адамдардың құпия сөздерін ұрлау",
+                "Басқалардың пікірін сыйлап, авторлық құқықты сақтау",
+                "Интернетте әдепсіз сөздер жазу",
+                "Бейтаныс сілтемелерге қажетсіз кіре беру"
+            ],
+            answer: 1
+        },
+        {
+            id: 2,
+            question: "2. Компьютердің миы деп аталатын және барлық есептеулерді атқаратын ішкі құрылғы:",
+            options: [
+                "Жедел жады (RAM)",
+                "Видеокарта",
+                "Процессор",
+                "Қатқыл диск (HDD)"
+            ],
+            answer: 2
+        },
+        {
+            id: 3,
+            question: "3. Компьютер өшкен кезде деректерді уақытша сақтайтын ішкі құрылғы:",
+            options: [
+                "Жедел жады (RAM)",
+                "Қатқыл диск",
+                "Аналық тақша",
+                "Флеш-карта"
+            ],
+            answer: 0
+        },
+        {
+            id: 4,
+            question: "4. Төмендегілердің қайсысы жүйелік программалық жабдықтамаға жатады?",
+            options: [
+                "Microsoft Word",
+                "Операциялық жүйе (мысалы, Windows)",
+                "Paint сурет редакторы",
+                "Ойын программалары"
+            ],
+            answer: 1
+        },
+        {
+            id: 5,
+            question: "5. Мәтін теру кезінде бас әріпке ауысу немесе символдар регистрін өзгерту үшін қандай батырма қолданылады?",
+            options: [
+                "Enter",
+                "Space",
+                "Shift",
+                "Backspace"
+            ],
+            answer: 2
+        },
+        {
+            id: 6,
+            question: "6. Мәтіндік процессорда көшіріп алған ақпаратты қою үшін қандай жедел (ыстық) пернелер қолданылады?",
+            options: [
+                "Ctrl + C",
+                "Ctrl + V",
+                "Ctrl + X",
+                "Ctrl + S"
+            ],
+            answer: 1
+        },
+        {
+            id: 7,
+            question: "7. Компьютердің барлық басқа құрылғылары жалғанатын негізгі үлкен тақша қалай аталады?",
+            options: [
+                "Аналық тақша (Motherboard)",
+                "Видеокарта",
+                "Қатқыл диск",
+                "Қуат блогы"
+            ],
+            answer: 0
+        }
+    ];
+
+    let studentData = { name: "", className: "", date: "" };
+    let userAnswers = {};
+
+    function startTest() {
+        const name = document.getElementById("student-name").value.trim();
+        const className = document.getElementById("student-class").value.trim();
+        const date = document.getElementById("test-date").value;
+
+        if (!name || !className || !date) {
+            alert("Барлық жолақтарды толтырыңыз!");
+            return;
+        }
+
+        studentData = { name, className, date };
+
+        document.getElementById("display-name").innerText = `Аты-жөні: ${name}`;
+        document.getElementById("display-class").innerText = `Сыныбы: ${className}`;
+        document.getElementById("display-date").innerText = `Күні: ${date}`;
+
+        document.getElementById("registration-screen").style.display = "none";
+        document.getElementById("quiz-screen").style.display = "block";
+
+        renderQuestions();
+    }
+
+    function renderQuestions() {
+        const container = document.getElementById("questions-container");
+        container.innerHTML = "";
+
+        questions.forEach((q, index) => {
+            let optionsHtml = "";
+            q.options.forEach((opt, optIndex) => {
+                optionsHtml += `
+                    <li>
+                        <label>
+                            <input type="radio" name="question-${q.id}" value="${optIndex}" onchange="checkAnswerEffect(${q.id}, ${optIndex})">
+                            ${opt}
+                        </label>
+                    </li>
+                `;
+            });
+
+            container.innerHTML += `
+                <div class="question-card">
+                    <div class="question-title">${q.question}</div>
+                    <ul class="options-list">${optionsHtml}</ul>
+                </div>
+            `;
+        });
+    }
+
+    // Әр жауап берген сайын эмоциялық салют немесе қателік белгісін көрсету
+    function checkAnswerEffect(questionId, selectedOption) {
+        userAnswers[questionId] = selectedOption;
+        const q = questions.find(item => item.id === questionId);
+        
+        if (q.answer === selectedOption) {
+            // Дұрыс жауап болса - салют (конфетти)
+            confetti({
+                particleCount: 50,
+                spread: 60,
+                origin: { y: 0.6 }
+            });
+        }
+    }
+
+    function submitTest() {
+        if (Object.keys(userAnswers).length < questions.length) {
+            if (!confirm("Барлық сұраққа жауап берген жоқсыз. Тестті аяқтағыңыз келе ме?")) {
+                return;
+            }
+        }
+
+        let score = 0;
+        questions.forEach(q => {
+            if (userAnswers[q.id] === q.answer) {
+                score++;
+            }
+        });
+
+        document.getElementById("quiz-screen").style.display = "none";
+        document.getElementById("result-screen").style.display = "block";
+        document.getElementById("score-text").innerText = `Сіздің нәтижеңіз: ${score} / ${questions.length}`;
+
+        // Қорытынды салют
+        confetti({
+            particleCount: 150,
+            spread: 100,
+            origin: { y: 0.4 }
+        });
+    }
+
+    function exportToExcel() {
+        let score = 0;
+        questions.forEach(q => {
+            if (userAnswers[q.id] === q.answer) score++;
+        });
+
+        // Excel-ге дұрыс түсу үшін UTF-8 BOM қосамыз
+        let csvContent = "\uFEFFАты-жөні,Сыныбы,Күні,Ұпай,Барлық сұрақ\n";
+        csvContent += `"${studentData.name}","${studentData.className}","${studentData.date}",${score},${questions.length}\n`;
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${studentData.name}_тест_нәтижесі.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+</script>
+
+</body>
+</html>
